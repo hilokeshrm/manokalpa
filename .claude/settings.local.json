@@ -20,7 +20,7 @@
       "Bash(npm run:*)",
       "Bash(npx ts-node:*)",
       "Bash(TS_NODE_COMPILER_OPTIONS='{\"\"module\"\":\"\"CommonJS\"\"}' npx ts-node prisma/seed.ts)",
-      "Bash(DATABASE_URL='postgresql://neondb_owner:npg_Pnz9tpueVCh8@ep-dark-truth-ak8xgmmr.c-3.us-west-2.aws.neon.tech/neondb?sslmode=require' TS_NODE_COMPILER_OPTIONS='{\"\"module\"\":\"\"CommonJS\"\"}' npx ts-node prisma/seed.ts)",
+      "Bash(DATABASE_URL='ADD_THE_URL_HERE' TS_NODE_COMPILER_OPTIONS='{\"\"module\"\":\"\"CommonJS\"\"}' npx ts-node prisma/seed.ts)",
       "Bash(grep -r btn-teal E:/anve/gig-works/manokalpa/app --include=*.css)",
       "Bash(grep -h \"export.*\\\\\\(GET\\\\|POST\\\\|PUT\\\\|DELETE\\\\|PATCH\\\\\\)\" /e/anve/gig-works/manokalpa/app/api/**/route.ts)"
     ]
