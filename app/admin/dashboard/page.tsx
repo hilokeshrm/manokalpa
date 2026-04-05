@@ -9,6 +9,8 @@ import {
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
 
+type Trend = "up" | "down" | "neutral";
+
 interface AdminStats {
   totalUsers: number;
   totalCounsellors: number;
@@ -36,12 +38,13 @@ export default function AdminDashboard() {
 
   const maxRevenue = stats ? Math.max(...stats.monthlyRevenue.map((d) => d.value), 1) : 1;
 
-  const statCards = stats
+  type Trend = "up" | "down" | "neutral";
+  const statCards: { label: string; value: string; change: string; trend: Trend; icon: React.ElementType; color: string }[] = stats
     ? [
-        { label: "Total Users", value: stats.totalUsers.toLocaleString(), change: "registered users", trend: "neutral" as const, icon: Users, color: "bg-brand-purple-pale text-brand-purple" },
-        { label: "Active Counsellors", value: String(stats.totalCounsellors), change: `${stats.pendingCounsellors} pending verification`, trend: "neutral" as const, icon: UserCheck, color: "bg-brand-teal-pale text-brand-teal" },
-        { label: "Sessions This Month", value: String(stats.sessionsThisMonth), change: "confirmed + completed", trend: "up" as const, icon: CalendarCheck, color: "bg-blue-50 text-blue-600" },
-        { label: "Revenue This Month", value: `₹${Math.round(stats.revenueThisMonth / 100).toLocaleString("en-IN")}`, change: "verified payments", trend: "up" as const, icon: CreditCard, color: "bg-amber-50 text-amber-600" },
+        { label: "Total Users",          value: stats.totalUsers.toLocaleString(),                                              change: "registered users",               trend: "neutral", icon: Users,        color: "bg-brand-purple-pale text-brand-purple" },
+        { label: "Active Counsellors",   value: String(stats.totalCounsellors),                                                 change: `${stats.pendingCounsellors} pending verification`, trend: "neutral", icon: UserCheck,    color: "bg-brand-teal-pale text-brand-teal" },
+        { label: "Sessions This Month",  value: String(stats.sessionsThisMonth),                                                change: "confirmed + completed",          trend: "up",      icon: CalendarCheck, color: "bg-blue-50 text-blue-600" },
+        { label: "Revenue This Month",   value: `₹${Math.round(stats.revenueThisMonth / 100).toLocaleString("en-IN")}`,        change: "verified payments",              trend: "up",      icon: CreditCard,   color: "bg-amber-50 text-amber-600" },
       ]
     : [];
 
