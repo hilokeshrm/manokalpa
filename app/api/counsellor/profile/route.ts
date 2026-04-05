@@ -41,7 +41,7 @@ export async function PATCH(req: NextRequest) {
 
   // Update user name if provided
   if (name) {
-    await db.user.update({ where: { id: user.sub }, data: { name } });
+    await db.user.update({ where: { id: user.userId }, data: { name } });
   }
 
   const counsellor = await db.counsellor.update({

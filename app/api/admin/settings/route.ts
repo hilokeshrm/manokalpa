@@ -67,7 +67,7 @@ async function requireAdmin(req: NextRequest) {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET || "fallback-secret");
     const { payload } = await jwtVerify(token, secret);
     if (payload.role !== "ADMIN") return null;
-    return payload;
+    return payload as { userId: string; role: string };
   } catch {
     return null;
   }
@@ -132,8 +132,8 @@ export async function PATCH(req: NextRequest) {
 
   await db.platformSetting.upsert({
     where: { key: section },
-    create: { key: section, value: merged, updatedBy: admin.sub as string },
-    update: { value: merged, updatedBy: admin.sub as string },
+    create: { key: section, value: merged as object, updatedBy: admin.userId as string },
+    update: { value: merged as object, updatedBy: admin.userId as string },
   });
 
   return NextResponse.json({ success: true, section });

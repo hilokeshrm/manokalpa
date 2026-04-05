@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   const status = searchParams.get("status");
 
   const reports = await db.sessionReport.findMany({
-    where: status ? { status } : undefined,
+    where: status ? { status: status as "DRAFT" | "SUBMITTED" | "REVIEWED" | "APPROVED" } : undefined,
     orderBy: { updatedAt: "desc" },
     include: {
       counsellor: { select: { id: true, name: true, email: true } },

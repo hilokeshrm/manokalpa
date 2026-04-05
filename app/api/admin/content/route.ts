@@ -31,7 +31,6 @@ export async function GET(req: NextRequest) {
       ...(search ? { title: { contains: search, mode: "insensitive" } } : {}),
     },
     include: {
-      author: { select: { name: true } },
       _count: { select: { feedback: true } },
     },
     orderBy: { createdAt: "desc" },

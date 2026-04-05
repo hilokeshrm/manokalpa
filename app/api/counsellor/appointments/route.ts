@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest) {
   const { id, status, meetingLink } = await req.json();
 
   const appointment = await db.appointment.findFirst({
-    where: { id, counsellorId: user.sub },
+    where: { id, counsellorId: user.userId },
   });
   if (!appointment) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
