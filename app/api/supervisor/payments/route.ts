@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { db } from "@/lib/db";
-import { verifyPaymentEffects } from "@/app/api/payments/route";
+import { verifyPaymentEffects } from "@/lib/payments";
 
 async function requireSupervisor(req: NextRequest) {
   const token = req.cookies.get("auth-token")?.value;
