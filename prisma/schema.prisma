@@ -1,0 +1,591 @@
+// Manokalpa Wellness Platform - Prisma Schema
+// Database: PostgreSQL (Neon) | Deployment: Vercel
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  COUNSELLOR
+  SUPERVISOR
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  VERIFIED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  UPI
+  CARD
+  NET_BANKING
+  WALLET
+  RAZORPAY
+}
+
+enum ContentType {
+  BLOG
+  VIDEO
+  AUDIO
+  PODCAST
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EventType {
+  ONLINE
+  OFFLINE
+  HYBRID
+}
+
+enum EventStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum SessionType {
+  JUST_LISTEN
+  INDIVIDUAL
+  COUPLES
+  FAMILY
+  GROUP
+  HOLISTIC
+  COMMUNITY
+  CORPORATE
+}
+
+enum CounsellorLevel {
+  ASSOCIATE
+  SENIOR
+  PRINCIPAL
+  LEAD
+}
+
+enum ReportStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+  APPROVED
+}
+
+enum NotificationType {
+  EMAIL
+  SMS
+  PUSH
+  IN_APP
+}
+
+// ─── Core Models ──────────────────────────────────────────────────────────────
+
+model User {
+  id              String    @id @default(cuid())
+  name            String
+  mobile          String    @unique
+  email           String    @unique
+  password        String
+  role            Role      @default(USER)
+  deviceId        String?
+  emailVerified   Boolean   @default(false)
+  mobileVerified  Boolean   @default(false)
+  isActive        Boolean   @default(true)
+  avatar          String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  profile         Profile?
+  healthDetails   HealthDetails?
+  counsellor      Counsellor?
+  appointmentsAsUser      Appointment[]  @relation("UserAppointments")
+  appointmentsAsCounsellor Appointment[] @relation("CounsellorAppointments")
+  payments        Payment[]
+  assessmentAnswers AssessmentAnswer[]
+  reflections     Reflection[]
+  eventRegistrations EventRegistration[]
+  eventFeedback   EventFeedback[]
+  contentFeedback ContentFeedback[]
+  chatsSent       ChatMessage[] @relation("SentMessages")
+  chatsReceived   ChatMessage[] @relation("ReceivedMessages")
+  notifications   Notification[]
+  sessionReportsAsUser SessionReport[] @relation("UserReports")
+  sessionReportsAsCounsellor SessionReport[] @relation("CounsellorReports")
+  sessionReportsAsSupervisor SessionReport[] @relation("SupervisorReviews")
+  subscriptions   UserSubscription[]
+  otps            Otp[]
+
+  @@map("users")
+}
+
+model Profile {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dob          DateTime?
+  gender       Gender?
+  qualification String?
+  designation  String?
+  institution  String?
+  shiftPattern String?
+  city         String?
+  state        String?
+  bio          String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model HealthDetails {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  energyLevel     Int?     // 1-10
+  sleepQuality    Int?     // 1-10
+  painFrequency   Int?     // 1-10
+  digestiveHealth Int?     // 1-10
+  wellbeing       Int?     // 1-10
+  conditions      String[] // chronic conditions
+  medications     String[]
+  notes           String?
+  updatedAt       DateTime @updatedAt
+
+  @@map("health_details")
+}
+
+model Counsellor {
+  id              String          @id @default(cuid())
+  userId          String          @unique
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expertise       String[]
+  qualifications  String[]
+  certifications  String[]
+  experience      Int             @default(0) // years
+  level           CounsellorLevel @default(ASSOCIATE)
+  rating          Float           @default(0)
+  totalRatings    Int             @default(0)
+  bio             String?
+  tagline         String?
+  languages       String[]        @default(["English"])
+  sessionTypes    SessionType[]
+  isVerified      Boolean         @default(false)
+  isAvailable     Boolean         @default(true)
+  consultationFee Int             @default(800)
+  supervisorId    String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Relations
+  availabilities  Availability[]
+  earnings        Earning[]
+
+  @@map("counsellors")
+}
+
+model Availability {
+  id           String     @id @default(cuid())
+  counsellorId String
+  counsellor   Counsellor @relation(fields: [counsellorId], references: [id], onDelete: Cascade)
+  dayOfWeek    Int        // 0-6 (Sunday-Saturday)
+  startTime    String     // "09:00"
+  endTime      String     // "17:00"
+  slotDuration Int        @default(50) // minutes
+  isActive     Boolean    @default(true)
+
+  @@map("availabilities")
+}
+
+// ─── Appointments & Payments ──────────────────────────────────────────────────
+
+model Appointment {
+  id            String            @id @default(cuid())
+  userId        String
+  user          User              @relation("UserAppointments", fields: [userId], references: [id])
+  counsellorId  String
+  counsellor    User              @relation("CounsellorAppointments", fields: [counsellorId], references: [id])
+  date          DateTime
+  time          String
+  duration      Int               @default(50) // minutes
+  sessionType   SessionType       @default(INDIVIDUAL)
+  status        AppointmentStatus @default(PENDING)
+  notes         String?
+  meetingLink   String?
+  isFreeSession Boolean           @default(false)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  // Relations
+  payment       Payment?
+  report        SessionReport?
+
+  @@map("appointments")
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  appointmentId   String?       @unique
+  appointment     Appointment?  @relation(fields: [appointmentId], references: [id])
+  amount          Int           // in paise (₹ * 100)
+  utr             String?       // UTR number
+  razorpayOrderId String?
+  razorpayPaymentId String?
+  method          PaymentMethod @default(RAZORPAY)
+  status          PaymentStatus @default(PENDING)
+  description     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("payments")
+}
+
+model Earning {
+  id              String     @id @default(cuid())
+  counsellorId    String
+  counsellor      Counsellor @relation(fields: [counsellorId], references: [id])
+  appointmentId   String     @unique
+  totalAmount     Int        // in paise
+  counsellorShare Int        // 70% in paise
+  platformShare   Int        // 30% in paise
+  tdsDeduction    Int        // 10% of counsellor share
+  netPayable      Int        // counsellorShare - tdsDeduction
+  isPaid          Boolean    @default(false)
+  paidAt          DateTime?
+  createdAt       DateTime   @default(now())
+
+  @@map("earnings")
+}
+
+// ─── Assessments ─────────────────────────────────────────────────────────────
+
+model Assessment {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  category    String?    // stress, anxiety, depression, etc.
+  duration    Int?       // estimated minutes
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+
+  questions   Question[]
+  results     AssessmentResult[]
+
+  @@map("assessments")
+}
+
+model Question {
+  id           String     @id @default(cuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  text         String
+  type         String     @default("SCALE") // SCALE, MCQ, TEXT, YES_NO
+  options      String[]
+  order        Int        @default(0)
+  weight       Float      @default(1.0)
+
+  answers      AssessmentAnswer[]
+
+  @@map("questions")
+}
+
+model AssessmentAnswer {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  questionId   String
+  question     Question @relation(fields: [questionId], references: [id])
+  answer       String
+  createdAt    DateTime @default(now())
+
+  result       AssessmentResult? @relation(fields: [resultId], references: [id])
+  resultId     String?
+
+  @@map("assessment_answers")
+}
+
+model AssessmentResult {
+  id           String     @id @default(cuid())
+  userId       String
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  score        Float
+  level        String?    // low, moderate, high
+  feedback     String?
+  completedAt  DateTime   @default(now())
+
+  answers      AssessmentAnswer[]
+
+  @@map("assessment_results")
+}
+
+// ─── Reflection Journal ───────────────────────────────────────────────────────
+
+model Reflection {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  thought   String
+  feeling   String?
+  reaction  String?
+  reframe   String?
+  rating    Int?     // 1-5 mood rating
+  tags      String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("reflections")
+}
+
+// ─── Content ──────────────────────────────────────────────────────────────────
+
+model Content {
+  id          String        @id @default(cuid())
+  title       String
+  slug        String        @unique
+  type        ContentType
+  status      ContentStatus @default(DRAFT)
+  body        String?       // for blogs
+  mediaUrl    String?       // for video/audio
+  thumbnail   String?
+  duration    Int?          // for audio/video in seconds
+  category    String?
+  tags        String[]
+  authorId    String?
+  views       Int           @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  feedback    ContentFeedback[]
+
+  @@map("content")
+}
+
+model ContentFeedback {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  contentId String
+  content   Content  @relation(fields: [contentId], references: [id])
+  rating    Int?     // 1-5
+  comment   String?
+  liked     Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, contentId])
+  @@map("content_feedback")
+}
+
+// ─── Events ───────────────────────────────────────────────────────────────────
+
+model Event {
+  id           String      @id @default(cuid())
+  title        String
+  description  String?
+  type         EventType   @default(ONLINE)
+  status       EventStatus @default(UPCOMING)
+  date         DateTime
+  endDate      DateTime?
+  venue        String?
+  meetingLink  String?
+  youtubeLink  String?
+  thumbnail    String?
+  capacity     Int?
+  price        Int         @default(0) // 0 = free
+  category     String?
+  tags         String[]
+  hostId       String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  registrations EventRegistration[]
+  feedback      EventFeedback[]
+
+  @@map("events")
+}
+
+model EventRegistration {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+  @@map("event_registrations")
+}
+
+model EventFeedback {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  rating    Int?     // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, eventId])
+  @@map("event_feedback")
+}
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+
+model ChatMessage {
+  id          String   @id @default(cuid())
+  senderId    String
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiverId  String
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  content     String
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+  attachmentUrl String?
+  createdAt   DateTime @default(now())
+
+  @@map("chat_messages")
+}
+
+// ─── Session Reports ──────────────────────────────────────────────────────────
+
+model SessionReport {
+  id             String       @id @default(cuid())
+  appointmentId  String       @unique
+  appointment    Appointment  @relation(fields: [appointmentId], references: [id])
+  userId         String
+  user           User         @relation("UserReports", fields: [userId], references: [id])
+  counsellorId   String
+  counsellor     User         @relation("CounsellorReports", fields: [counsellorId], references: [id])
+  supervisorId   String?
+  supervisor     User?        @relation("SupervisorReviews", fields: [supervisorId], references: [id])
+  sessionSummary String?
+  interventions  String[]
+  nextSteps      String?
+  status         ReportStatus @default(DRAFT)
+  supervisorNote String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("session_reports")
+}
+
+// ─── Subscriptions ────────────────────────────────────────────────────────────
+
+model SubscriptionPlan {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  sessions    Int
+  price       Int      // in paise
+  discount    Int      @default(0) // percentage
+  sessionType SessionType?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  userSubscriptions UserSubscription[]
+
+  @@map("subscription_plans")
+}
+
+model UserSubscription {
+  id         String           @id @default(cuid())
+  userId     String
+  user       User             @relation(fields: [userId], references: [id])
+  planId     String
+  plan       SubscriptionPlan @relation(fields: [planId], references: [id])
+  sessionsUsed Int            @default(0)
+  expiresAt  DateTime?
+  isActive   Boolean          @default(true)
+  createdAt  DateTime         @default(now())
+
+  @@map("user_subscriptions")
+}
+
+// ─── Notifications & OTP ──────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType @default(IN_APP)
+  title     String
+  body      String
+  isRead    Boolean          @default(false)
+  data      Json?
+  createdAt DateTime         @default(now())
+
+  @@map("notifications")
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  code      String
+  type      String   // EMAIL_VERIFY, MOBILE_VERIFY, LOGIN, RESET_PASSWORD
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("otps")
+}
+
+// ─── Platform Settings ────────────────────────────────────────────────────────
+
+model PlatformSetting {
+  key       String   @id  // "general" | "notifications" | "payments" | "email" | "security" | "sessions"
+  value     Json
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@map("platform_settings")
+}
+
+// ─── Contact/Enquiries ────────────────────────────────────────────────────────
+
+model ContactEnquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  mobile    String?
+  subject   String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("contact_enquiries")
+}

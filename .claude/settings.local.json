@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Lokesh.R.M/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/326b94f3-a1b8-45e3-b4b2-9741e0cef909/c229b69c-6816-4462-b720-9c0c9ad7dde8/skills/pdf/**)",
+      "Bash(pip install:*)",
+      "Bash(python -c \":*)",
+      "Bash(npm install:*)",
+      "Bash(npx prisma:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx next:*)",
+      "Bash(./node_modules/.bin/prisma generate:*)",
+      "Bash(node node_modules/prisma/build/index.js generate)",
+      "Bash(node node_modules/next/dist/bin/next build)",
+      "Bash(timeout 15 node node_modules/next/dist/bin/next dev)",
+      "Bash(python3 -c \":*)",
+      "Bash(npm --version)",
+      "Bash(timeout 8 node node_modules/next/dist/bin/next dev --port 3001)",
+      "Bash(node node_modules/npm/bin/npm-cli.js audit)",
+      "Bash(npm audit:*)",
+      "Bash(npm run:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(TS_NODE_COMPILER_OPTIONS='{\"\"module\"\":\"\"CommonJS\"\"}' npx ts-node prisma/seed.ts)",
+      "Bash(DATABASE_URL='postgresql://neondb_owner:npg_Pnz9tpueVCh8@ep-dark-truth-ak8xgmmr.c-3.us-west-2.aws.neon.tech/neondb?sslmode=require' TS_NODE_COMPILER_OPTIONS='{\"\"module\"\":\"\"CommonJS\"\"}' npx ts-node prisma/seed.ts)",
+      "Bash(grep -r btn-teal E:/anve/gig-works/manokalpa/app --include=*.css)",
+      "Bash(grep -h \"export.*\\\\\\(GET\\\\|POST\\\\|PUT\\\\|DELETE\\\\|PATCH\\\\\\)\" /e/anve/gig-works/manokalpa/app/api/**/route.ts)"
+    ]
+  }
+}
